@@ -16,18 +16,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   if ($num == 1) {
     while ($row = mysqli_fetch_assoc($result)) {
-        if (password_verify($password, $row['password'])) {
-            $login = true;
-            session_start();
-            $_SESSION['loggedin'] = true;
-            $_SESSION['user'] = $email;
-            header("location: home.php");
+      if (password_verify($password, $row['password'])) {
+        session_start();
+        // $login = true;
+        // $_SESSION['loggedin'] = true;
+        $_SESSION['user'] = $email;
+        $otp = rand(10000, 99999); //Generate OTP
+        include("SMTP/class.phpmailer.php");
+        include("SMTP/class.smtp.php");
+
+        $message = '<div>
+     <p><b>Hello!</b></p>
+     <p>You are recieving this email because we recieved a OTP request for your account.</p>
+     <br>
+     <p>Your OTP is: <b>' . $otp . '</b></p>
+     <br>
+     <p>If you did not request OTP, no further action is required.</p>
+     <p>~ scor32k</p>
+    </div>';
+
+        $email = $email;
+        $mail = new PHPMailer;
+        $mail->IsSMTP();
+        $mail->SMTPAuth = true;
+        $mail->SMTPSecure = "tls";
+        $mail->Host = 'smtp.gmail.com';
+        $mail->Port = 587;
+        $mail->Username = "scorcismweb@gmail.com"; // Enter your username
+        $mail->Password = "bkagwisjmilpjpzp"; // Enter Password
+        $mail->FromName = "calculator - scor32k";
+        $mail->AddAddress($email);
+        $mail->Subject = "OTP";
+        $mail->isHTML(TRUE);
+        $mail->Body = $message;
+
+        if ($mail->send()) {
+
+          $insert_query = mysqli_query($conn, "insert into otp_check set otp='$otp', is_expired='0'");
+
+          header('location:otpverify.php');
+
         } else {
-            $errorMessage = "Invalid Credentials";
+          $errorMessage = "Email not delivered";
         }
+      } else {
+        $errorMessage = "Invalid Credentialsssssssssssssssssss";
+      }
     }
   } else {
-    $errorMessage = "Invalid credentials";
+    $errorMessage = "Invalid credentialswwwwwwwwwwwwww";
   }
 
 }
@@ -53,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   if ($login) {
     echo ' <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>Success!</strong> You are not logged in
+        <strong>Success!</strong> You are now logged in
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>';
   }
@@ -81,7 +118,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <label for="password" class="form-label">Password</label>
         <input type="password" class="form-control" id="password" name="password">
       </div>
-      <button type="submit" class="btn btn-primary">Login</button>
+      <button type="submit" class="btn btn-primary">Send OTP</button>
     </form>
 
 
