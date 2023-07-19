@@ -52,7 +52,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if ($mail->send()) {
 
-          $insert_query = mysqli_query($conn, "insert into otp_check set otp='$otp', is_expired='0'");
+          $insert_query = mysqli_query($conn, "
+          INSERT INTO `otp_check` (`otp`, `is_expired`, `create_at`, `email`) VALUES ('$otp', '0', current_timestamp(), '$email');
+          ");
 
           header('location:otpverify.php');
 

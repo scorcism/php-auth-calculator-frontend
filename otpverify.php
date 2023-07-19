@@ -1,26 +1,33 @@
 <?php
+session_start();
 
 $errorMessage = false;
+if (isset($_SESSION["user"])) {
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    session_start();
-    include 'partials/_db.php';
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $otp = $_POST["otp"];
+        include 'partials/_db.php';
 
-    $select_query = mysqli_query($conn, "select * from otp_check where otp='$otp' and is_expired!=1 and NOW()<=DATE_ADD(create_at,interval 5 minute)");
+        $otp = $_POST["otp"];
+        $user_email = $_SESSION["user"];
 
-    $count = mysqli_num_rows($select_query);
+        $select_query = mysqli_query($conn, "select * from otp_check where otp='$otp' and email='$user_email' and is_expired!=1 and NOW()<=DATE_ADD(create_at,interval 5 minute)");
 
-    if ($count > 0) {
-        $select_query = mysqli_query($conn, "update otp_check set is_expired=1 where otp='$otp'");
-        $login = true;
-        $_SESSION['loggedin'] = true;
-        header("location: home.php");
-    } else {
-        $errorMessage = "Invalid OTP!";
+        $count = mysqli_num_rows($select_query);
+
+        if ($count > 0) {
+            $select_query = mysqli_query($conn, "update otp_check set is_expired=1 where otp='$otp'");
+            $login = true;
+            $_SESSION['loggedin'] = true;
+            header("location: home.php");
+        } else {
+            $errorMessage = "Invalid OTP!";
+        }
     }
+} else {
+    header("location: login.php");
+    exit;
 }
 
 
@@ -50,10 +57,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     ?>
     <div class="container my-4">
         <h2 class="text-left fw-bolder">Enter OTP</h2>
-
+        <p><b>Email</b>:
+            <?php echo $_SESSION["user"] ?>
+        </p>
 
         <form action="/calculator/otpverify.php" method="post">
+
             <div class="mb-3">
+
                 <label for="otp" class="form-label">OTP:</label>
                 <input type="number" class="form-control" id="otp" name="otp" aria-describedby="emailHelp">
             </div>
